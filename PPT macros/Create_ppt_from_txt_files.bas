@@ -32,14 +32,14 @@ Sub CreatePresentationFromTextFiles(fileNames As Variant, titleFontName As Strin
         Set titleSlide = pptPres.slides.Add(pptPres.slides.Count + 1, 1) ' ppLayoutTitle = 1
         
         ' Set title slide text and format
-        titleSlide.Shapes.Title.TextFrame.TextRange.Text = Left(GetFileNameFromPath(fileName), Len(GetFileNameFromPath(fileName)) - 4) ' Remove ".txt" extension from title
-        With titleSlide.Shapes.Title.TextFrame.TextRange.Font
+        titleSlide.Shapes.Title.textFrame.TextRange.Text = Left(GetFileNameFromPath(fileName), Len(GetFileNameFromPath(fileName)) - 4) ' Remove ".txt" extension from title
+        With titleSlide.Shapes.Title.textFrame.TextRange.Font
             .Name = titleFontName
             .Size = titleFontSize
         End With
         
         ' Center title text horizontally and vertically
-        With titleSlide.Shapes.Title.TextFrame.TextRange.ParagraphFormat
+        With titleSlide.Shapes.Title.textFrame.TextRange.ParagraphFormat
             .Alignment = 2 ' ppAlignCenter = 2
             .SpaceBefore = 0
             .SpaceAfter = 0
@@ -47,22 +47,23 @@ Sub CreatePresentationFromTextFiles(fileNames As Variant, titleFontName As Strin
         
         ' Loop through each slide text and add to presentation
         For slideIndex = LBound(slides) To UBound(slides)
-            ' Create a new slide
-            Set pptSlide = pptPres.slides.Add(pptPres.slides.Count + 1, 2) ' ppLayoutText = 2
+            ' Create a new slide with two-column text layout
+            Set pptSlide = pptPres.slides.Add(pptPres.slides.Count + 1, 3) ' ppLayoutTwoColumnText = 3
             
-            ' Set lyrics slide text and format
-            pptSlide.Shapes(1).TextFrame.TextRange.Text = slides(slideIndex)
-            With pptSlide.Shapes(1).TextFrame.TextRange.Font
+            ' Set lyrics slide text in the left text box (Shape 2 in two-column layout)
+            pptSlide.Shapes(2).textFrame.TextRange.Text = slides(slideIndex)
+            With pptSlide.Shapes(2).textFrame.TextRange.Font
                 .Name = lyricsFontName
                 .Size = lyricsFontSize
             End With
             
-            ' Center lyrics text horizontally and vertically
-            With pptSlide.Shapes(1).TextFrame.TextRange.ParagraphFormat
+            ' Center lyrics text horizontally and vertically in the left text box
+            With pptSlide.Shapes(2).textFrame.TextRange.ParagraphFormat
                 .Alignment = 2 ' ppAlignCenter = 2
                 .SpaceBefore = 0
                 .SpaceAfter = 0
             End With
+            
         Next slideIndex
     Next i
     
