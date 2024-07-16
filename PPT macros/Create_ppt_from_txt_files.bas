@@ -1,4 +1,4 @@
-Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As String, titleFontSize As Integer, lyricsFontName As String, lyricsFontSize As Integer)
+Sub CreatePresentationFromTextFiles(songNames As Variant, config As Variant)
     Dim pptApp As Object
     Dim pptPres As Object
     Dim pptSlide As Object
@@ -21,60 +21,70 @@ Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As Strin
     ' Loop through each songName passed as input
     For i = LBound(songNames) To UBound(songNames)
         songName = songNames(i)
-        filePath = "C:\Users\admin\Desktop\" + songName
+        filePath = config("songLyricsPath") + songName
         
         ' Check if the file exists
-        If Dir(filePath + "_english.txt") <> "" Then
+        If Dir(filePath + "_" + config("lang1") + ".txt") <> "" Then
             ' Read the entire text from the file
-            Open filePath + "_english.txt" For Input As #1
-            eng_lyrics = Input$(LOF(1), 1)
+            Open filePath + "_" + config("lang1") + ".txt" For Input As #1
+            lyrics_lang1 = Input$(LOF(1), 1)
             Close #1
+            
+            cp1 = InStr(lyrics_lang1, vbCrLf & vbCrLf)
+            c1 = Left(lyrics_lang1, cp1 - 1)
         Else
-            MsgBox "English Lyrics were not found for " & songName & ". Please ensure lyrics for the song are present in the songs folder and songname entered is correct and matches the lyrics file in the folder."
-            eng_lyrics = ""
+            MsgBox config("lang1") + " Lyrics were not found for " & songName & ". Please ensure lyrics for the song are present in the songs folder and songname entered is correct and matches the lyrics file in the folder."
+            lyrics_lang1 = ""
+            c1 = ""
         End If
         
          ' Check if the file exists
-        If Dir(filePath + "_hindi.txt") <> "" Then
+        If Dir(filePath + "_" + config("lang2") + ".txt") <> "" Then
              ' Read the entire text from the file
             Set fs = CreateObject("Scripting.FileSystemObject")
-            Set ts = fs.OpenTextFile(filePath + "_hindi.txt", 1, False, -1) ' Open file for reading with specified encoding
-            hin_lyrics = ts.ReadAll
+            Set ts = fs.OpenTextFile(filePath + "_" + config("lang2") + ".txt", 1, False, -1) ' Open file for reading with specified encoding
+            lyrics_lang2 = ts.ReadAll
             ts.Close
             Set ts = Nothing
             Set fs = Nothing
+            
+            cp2 = InStr(lyrics_lang2, vbCrLf & vbCrLf)
+            c2 = Left(lyrics_lang2, cp2 - 1)
         Else
-            MsgBox "Hindi Lyrics were not found for " & songName & ". Please ensure lyrics for the song are present in the songs folder and song name entered is correct and matches the lyrics file in the folder."
-            hin_lyrics = ""
-        End If
-    
-        
-        ' Find the position of the end of the first line
-        posFirstLineEnd = InStr(eng_lyrics, vbCrLf & vbCrLf)
-    
-        ' Extract the first line
-        If posFirstLineEnd > 0 Then
-            citation = Left(eng_lyrics, posFirstLineEnd - 1)
-            If InStr(citation, vbCrLf) > 0 Or Len(citation) < 6 Then
-                citation = ""
-            Else
-                eng_lyrics = Mid(eng_lyrics, posFirstLineEnd + Len(vbCrLf) * 2)
+            If lang2 <> "" Then
+                MsgBox config("lang2") + " Lyrics were not found for " & songName & ". Please ensure lyrics for the song are present in the songs folder and song name entered is correct and matches the lyrics file in the folder."
             End If
+            lyrics_lang2 = ""
+            c2 = ""
         End If
-        ' Extract the remaining text after removing the first line
         
+        citation = ""
+        If c1 <> "" And InStr(c1, vbCrLf) = 0 Then
+            citation = c1
+            lyrics_lang1 = Mid(lyrics_lang1, cp1 + Len(vbCrLf) * 2)
+        End If
+        If c2 <> "" And InStr(c2, vbCrLf) = 0 Then
+            citation = c2
+            lyrics_lang2 = Mid(lyrics_lang2, cp2 + Len(vbCrLf) * 2)
+        End If
         
         ' Split text into slides based on double newline
-        slides = Split(eng_lyrics, vbCrLf & vbCrLf)
-        hin_slides = Split(hin_lyrics, vbCrLf & vbCrLf)
+        l_text = Split(lyrics_lang1, vbCrLf & vbCrLf)
+        r_text = Split(lyrics_lang2, vbCrLf & vbCrLf)
         
-        es = UBound(slides) - LBound(slides) + 1
-        hs = UBound(hin_slides) - LBound(hin_slides) + 1
-        Debug.Print "eng slides " & UBound(slides) - LBound(slides) + 1
-        Debug.Print "hindi slides " & UBound(hin_slides) - LBound(hin_slides) + 1
+        If lyrics_lang1 = "" Then
+            Text = r_text
+        Else
+            Text = l_text
+        End If
         
-        If eng_lyrics <> "" And hin_lyrics <> "" And es <> hs Then
-            MsgBox "English and Hindi slides for song " & songName & " do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song."
+        l1 = UBound(l_text) - LBound(l_text) + 1
+        l2 = UBound(r_text) - LBound(r_text) + 1
+        Debug.Print "eng slides " & UBound(l_text) - LBound(l_text) + 1
+        Debug.Print "hindi slides " & UBound(r_text) - LBound(r_text) + 1
+        
+        If lyrics_lang1 <> "" And lyrics_lang2 <> "" And l1 <> l2 Then
+            MsgBox config("lang1") + " and " + config("lang2") + "slides for song " & songName & " do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song."
             GoTo SkipSong
         End If
             
@@ -84,8 +94,8 @@ Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As Strin
         ' Set title slide text and format
         titleSlide.Shapes.Title.textFrame.TextRange.Text = songName
         With titleSlide.Shapes.Title.textFrame.TextRange.Font
-            .Name = titleFontName
-            .Size = titleFontSize
+            .Name = config("titleFontName")
+            .Size = config("titleFontSize")
         End With
         
         ' Center title text horizontally and vertically
@@ -99,7 +109,7 @@ Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As Strin
         footerShape.textFrame.TextRange.Text = citation
         ' Set lyrics slide text in the left text box
         With footerShape.textFrame.TextRange.Font
-            .Name = lyricsFontName
+            .Name = config("lyricsFontName")
             .Size = 18
         End With
         ' Center the lyrics horizontally and vertically
@@ -110,18 +120,18 @@ Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As Strin
         End With
         
         ' Loop through each slide text and add to presentation
-        For slideIndex = LBound(slides) To UBound(slides)
+        For slideIndex = LBound(Text) To UBound(Text)
             ' Create a new slide with two-column text layout
             Set pptSlide = pptPres.slides.Add(pptPres.slides.Count + 1, ppLayoutBlank) ' ppLayoutTwoColumnText = 3
             SlideWidth = pptSlide.Master.Width
             slideHeight = pptSlide.Master.Height
             
             ' Calculate dimensions for textboxes
-            textboxHeight = slideHeight - 24
-            If eng_lyrics = "" Then
+            textboxHeight = slideHeight - 36
+            If lyrics_lang1 = "" Then
                 center = 12
                 textboxWidth = SlideWidth - 24
-            ElseIf hin_lyrics = "" Then
+            ElseIf lyrics_lang2 = "" Then
                 textboxWidth = SlideWidth - 24
             Else
                 center = SlideWidth / 2 + 12
@@ -129,14 +139,14 @@ Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As Strin
             End If
                 
             
-            If eng_lyrics <> "" Then
+            If lyrics_lang1 <> "" Then
                 ' Add first textbox
                 Set pptTextbox1 = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, 12, 18, textboxWidth, textboxHeight)
-                pptTextbox1.textFrame.TextRange.Text = slides(slideIndex) ' Mid(slides(slideIndex), 0)
+                pptTextbox1.textFrame.TextRange.Text = l_text(slideIndex)
                 ' Set lyrics slide text in the left text box
                 With pptTextbox1.textFrame.TextRange.Font
-                    .Name = "Times New Roman"
-                    .Size = lyricsFontSize
+                    .Name = config("lyricsFontName")
+                    .Size = config("lyricsFontSize")
                 End With
                 ' Center the lyrics horizontally and vertically
                 With pptTextbox1.textFrame.TextRange.ParagraphFormat
@@ -149,14 +159,14 @@ Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As Strin
             End If
             
     
-            If hin_lyrics <> "" Then
+            If lyrics_lang2 <> "" Then
                 ' Add second textbox
                 Set pptTextbox2 = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, center, 18, textboxWidth, textboxHeight)
-                pptTextbox2.textFrame.TextRange.Text = hin_slides(slideIndex) 'Mid(hin_slides(slideIndex), 0)
+                pptTextbox2.textFrame.TextRange.Text = r_text(slideIndex)
                  ' Set lyrics slide text in the left text box
                 With pptTextbox2.textFrame.TextRange.Font
                     .Name = "Mangal"
-                    .Size = lyricsFontSize - 2
+                    .Size = config("lyricsFontSize") - 2
                 End With
                 ' Center the lyrics horizontally and vertically
                 With pptTextbox2.textFrame.TextRange.ParagraphFormat
@@ -168,11 +178,11 @@ Sub CreatePresentationFromTextFiles(songNames As Variant, titleFontName As Strin
                 End With
             End If
             
-            Set footerShape = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, 18, textboxHeight - 36, SlideWidth, slideHeight - 36)
+            Set footerShape = pptSlide.Shapes.AddTextbox(msoTextOrientationHorizontal, 18, slideHeight - 36, SlideWidth, 36)
             footerShape.textFrame.TextRange.Text = citation
              ' Set lyrics slide text in the left text box
             With footerShape.textFrame.TextRange.Font
-                .Name = lyricsFontName
+                .Name = config("lyricsFontName")
                 .Size = 18
             End With
             ' Center the lyrics horizontally and vertically
@@ -191,30 +201,36 @@ SkipSong:
     Set titleSlide = Nothing
     Set pptPres = Nothing
     Set pptApp = Nothing
+    Set fs = Nothing
+    Set ts = Nothing
 End Sub
 
 
-Sub RunPresentationCreation()
+Public Sub RunPresentationCreation()
     Dim songNames As Variant
-    Dim titleFontName As String
-    Dim titleFontSize As Integer
-    Dim lyricsFontName As String
-    Dim lyricsFontSize As Integer
+
+    configPath = "C:\Users\admin\Desktop\Church\config.txt"
+    Set config = CreateObject("Scripting.Dictionary")
     
-    Open "C:\Users\admin\Desktop\Song list.txt" For Input As #1
+    f = FreeFile
+    Open configPath For Input As f
+    Do While Not EOF(f)
+        Line Input #f, Line
+        sepPos = InStr(Line, "=")
+        If sepPos > 0 Then
+            key = Trim(Left(Line, sepPos - 1))
+            Value = Trim(Mid(Line, sepPos + 1))
+            
+            config.Add key, Value
+        End If
+    Loop
+    Close f
+       
+    Open config("songListPath") For Input As #1
     songs = Input$(LOF(1), 1)
     Close #1
-    songNames = Split(songs, vbCrLf)
-    ' Define the list of .txt files (replace with your file paths)
-    ' songNames = Array("Lyrics", "Lyrics2")
-    
-    ' Define font properties
-    titleFontName = "Arial"
-    titleFontSize = 60
-    lyricsFontName = "Times New Roman"
-    lyricsFontSize = 43
+    songNames = Split(Trim(songs), vbCrLf)
     
     ' Call the main function to create the presentation
-    CreatePresentationFromTextFiles songNames, titleFontName, titleFontSize, lyricsFontName, lyricsFontSize
+    CreatePresentationFromTextFiles songNames, config
 End Sub
-
