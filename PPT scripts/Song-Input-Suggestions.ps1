@@ -44,19 +44,24 @@ function Get-Song($song){
 			}
 		}
 
-		Display-Songs
 		#print all the songs entered uptil now with their languages
+		Display-Songs
+
 		if ($Suggestions.Length -gt 0) {
 			if($song){Write-Host "Available Languages:"}
 			else {Write-Host "Available songs:"}
 
-			$Suggestions | ForEach-Object {Write-Host "=> $_"}
+			for($i=1;$i -le $Suggestions.Length;$i++){
+				if($pos -ne 0 -and $pos -eq "" -and $i -lt 9){$p="$i. "}
+				else{$p=""}
+				Write-Host $p$($Suggestions[$i-1])
+			}
 			Write-Host ""
 
 			if($pos -ne 0 -and $pos -eq "" -or $pos -ge $Suggestions.Length){
 				if($song){Write-Host -NoNewline "Language: $in"}
 				else {Write-Host -NoNewline "Song name: $in"}
-				
+
 				$pos = ""
 			} else{
 				if($song){Write-Host -NoNewline "Language: $($Suggestions[$pos])"}
@@ -77,12 +82,19 @@ function Get-Song($song){
 			$c = $Host.UI.RawUI.ReadKey("IncludeKeyDown,NoEcho")
 			# Write-Host $c
 			switch($c.VirtualKeycode){
-				{$_ -ge 48 -and $_ -le 105 -or $_ -eq 32}{
+				{$_ -ge 65 -and $_ -le 90 -or $_ -eq 32}{
 					if ($pos -ne ""){
 						$in = $Suggestions[$pos] + $c.Character
 						$pos = ""
 					} else{
 						$in += $c.Character
+					}
+					Break
+				}
+				{$_ -ge 49 -and $_ -le 57 -or $_ -ge 97 -and $_ -le 105}{
+					Write-Host ($pos -eq "") ($c.Character -le "$($suggestions.Length)")
+					if($pos -ne 0 -and $pos -eq "" -and $c.Character -le "$($suggestions.Length)"){
+						$pos = "$($c.Character)"/1 -1
 					}
 					Break
 				}
@@ -141,7 +153,7 @@ function Get-Song($song){
 
 
 
-Get-Content "C:\Users\admin\Desktop\Church\config.txt" | Foreach-Object{
+Get-Content "C:\Users\admin\Desktop\Church\Church-applications\config.txt" | Foreach-Object{
    $configText = $_.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
    $key, $value = $_.Split("=")
    if($key -and $value){
@@ -149,17 +161,49 @@ Get-Content "C:\Users\admin\Desktop\Church\config.txt" | Foreach-Object{
    }
 }
 
+Write-Host "Please select one of the below options"
+Write-Host "1. Single language for all songs"
+Write-Host "2. Same two languages for all songs"
+Write-Host "3. Manually add language for each song"
+Write-Host "Select 1, 2 or 3. Press any other key to exit"
+$opt = Read-Host "Option selected: "
+if($opt -eq '1' -or $opt -eq '2'){
+	$suggestions = @()
+	Get-ChildItem -Path $global:config["songLyricsPath"] -Name | ForEach-Object {
+		if($_.LastIndexOf("_") -gt 0){
+			$len = $_.LastIndexOf(".") - $_.LastIndexOf("_") - 1
+			$nm = $_.Substring($_.LastIndexOf("_")+1,$len)
+
+			if ($Suggestions -notcontains $nm){
+				$Suggestions += $nm
+				Write-Host "$($suggestions.Length). $nm"
+			}
+		}
+	}
+
+	Write-Host "Please select a language. If any song is not present in chosen language it will not be added to the ppt"
+	$c1 = Read-Host "Language selected: "
+	if($c1 -lt $suggestions.Length){
+		$lang1 = $suggestions[$c1-1]
+	}
+	if($opt -eq '2'){
+		$c2 = Read-Host "Language selected: "
+		if($c2 -ne $c1 -and $c2 -lt $suggestions.Length){$lang2 = $suggestions[$c2-1]}
+	}
+	
+}
 
 while($true){
 	$song = Get-Song ""
 	if(-not $song){Break}
 	$songList[$song] = @()
-	$lang1 = Get-Song $song
 	if($lang1){
 		$songList[$song] += $lang1
 		$songList[$song] += Get-Song $song
 	} else {
-		$songList[$song] += $global:config["defaultLang"]
+		$lang1 = Get-Song $song
+		if(-not $lang1){$songList.Remove($song)}
+		# $songList[$song] += $global:config["defaultLang"]
 	}
 }
 
