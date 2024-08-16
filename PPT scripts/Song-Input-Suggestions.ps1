@@ -1,9 +1,12 @@
-$global:songList = [ordered]@{}
 $global:config = @{}
+$global:songList = [ordered]@{}
+$global:language1 = ""
+$global:language2 = ""
+$global:orientation = ""
 
 
 function Display-Songs(){
-	Clear-Host
+	# Clear-Host
 
 	ForEach ($key in $global:songList.keys){
 		Write-Host "Song name: $key"
@@ -16,7 +19,7 @@ function Display-Songs(){
 }
 
 
-function Get-Song($song){
+function Get-Song-Language($song){
 	$in = ""
 	$pos = ""
 	$Suggestions = @()
@@ -152,8 +155,58 @@ function Get-Song($song){
 }
 
 
+function Get-Language(){
+	Write-Host "Please select one of the below options"
+	Write-Host "1. Single language for all songs"
+	Write-Host "2. Same two languages for all songs"
+	Write-Host "3. Manually add language for each song"
+	$opt = Read-Host "Option selected: "
+	if($opt -eq '1' -or $opt -eq '2'){
+		$suggestions = @()
+		Get-ChildItem -Path $global:config["songLyricsPath"] -Name | ForEach-Object {
+			if($_.LastIndexOf("_") -gt 0){
+				$len = $_.LastIndexOf(".") - $_.LastIndexOf("_") - 1
+				$nm = $_.Substring($_.LastIndexOf("_")+1,$len)
 
-Get-Content "C:\Users\admin\Desktop\Church\Church-applications\config.txt" | Foreach-Object{
+				if ($Suggestions -notcontains $nm){
+					$Suggestions += $nm
+					Write-Host "$($suggestions.Length). $nm"
+				}
+			}
+		}
+
+		Write-Host "Please select a language. If any song is not present in chosen language it will not be added to the ppt"
+		$c1 = Read-Host "Language 1 selected: "
+		Write-Host $suggestions $c1
+		if($c1 -lt $suggestions.Length){
+			$global:language1 = $suggestions[$c1-1]
+		}
+		if($opt -eq '2'){
+			$c2 = Read-Host "Language 2 selected: "
+			if($c2 -ne $c1 -and $c2 -lt $suggestions.Length){$global:language2 = $suggestions[$c2-1]}
+		}
+
+	}
+}
+
+
+function Get-Orientation(){
+	Write-Host "Please select one of the below options"
+	Write-Host "1. Stack vertical for all songs"
+	Write-Host "2. Stack side by side for all songs"
+	Write-Host "3. Manually add orientation for each song"
+	$opt = Read-Host "Option selected: "
+	if($opt -eq '1'){
+		Return "vertical"
+	} elseif($opt -eq '2'){
+		Return "horizontal"
+	}
+}
+
+
+
+
+Get-Content ".\config.txt" | Foreach-Object{
    $configText = $_.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
    $key, $value = $_.Split("=")
    if($key -and $value){
@@ -161,49 +214,37 @@ Get-Content "C:\Users\admin\Desktop\Church\Church-applications\config.txt" | For
    }
 }
 
-Write-Host "Please select one of the below options"
-Write-Host "1. Single language for all songs"
-Write-Host "2. Same two languages for all songs"
-Write-Host "3. Manually add language for each song"
-Write-Host "Select 1, 2 or 3. Press any other key to exit"
-$opt = Read-Host "Option selected: "
-if($opt -eq '1' -or $opt -eq '2'){
-	$suggestions = @()
-	Get-ChildItem -Path $global:config["songLyricsPath"] -Name | ForEach-Object {
-		if($_.LastIndexOf("_") -gt 0){
-			$len = $_.LastIndexOf(".") - $_.LastIndexOf("_") - 1
-			$nm = $_.Substring($_.LastIndexOf("_")+1,$len)
-
-			if ($Suggestions -notcontains $nm){
-				$Suggestions += $nm
-				Write-Host "$($suggestions.Length). $nm"
-			}
-		}
-	}
-
-	Write-Host "Please select a language. If any song is not present in chosen language it will not be added to the ppt"
-	$c1 = Read-Host "Language selected: "
-	if($c1 -lt $suggestions.Length){
-		$lang1 = $suggestions[$c1-1]
-	}
-	if($opt -eq '2'){
-		$c2 = Read-Host "Language selected: "
-		if($c2 -ne $c1 -and $c2 -lt $suggestions.Length){$lang2 = $suggestions[$c2-1]}
-	}
-	
+Get-Language
+if ($global:language2){
+	$global:orientation = Get-Orientation
 }
 
 while($true){
-	$song = Get-Song ""
+	$song = Get-Song-Language ""
 	if(-not $song){Break}
 	$songList[$song] = @()
-	if($lang1){
-		$songList[$song] += $lang1
-		$songList[$song] += Get-Song $song
+	if($global:language1){
+		$songList[$song] += $global:language1
+		if($global:language2){
+			$songList[$song] += $global:language2
+			if($global:orientation){
+				$songList[$song] += $global:orientation
+			} else {
+				$songList[$song] += Get-Orientation
+			}
+		}
 	} else {
-		$lang1 = Get-Song $song
-		if(-not $lang1){$songList.Remove($song)}
-		# $songList[$song] += $global:config["defaultLang"]
+		$lang = Get-Song-Language $song
+		if($lang){
+			$songList[$song] += $lang
+			$lang = Get-Song-Language $song
+			if($lang){
+				$songList[$song] += $lang
+				$songList[$song] += Get-Orientation
+			}
+		} else {
+			$songList.Remove($song)
+		}
 	}
 }
 

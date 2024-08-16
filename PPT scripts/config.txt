@@ -1,0 +1,20 @@
+macroPPTPath=C:\Users\admin\Desktop\Church\Church-applications\PPT macros\Macro presentation.pptm
+songListPath=C:\Users\admin\Desktop\Church\Church-applications\Song list.txt
+songLyricsPath=C:\Users\admin\Desktop\Church\Church-applications\Song Lyrics\
+
+defaultLang=english
+
+titleFontSize=60
+titleFontName=Times New Roman
+titleFontColor=0x00FFFFFF
+titleBackground=0x00000000
+lyricsFontSize=43
+lyricsFontName=Times New Roman
+lyricsBackground=0x00000000
+
+lang1FontColor=0x00FFFFFF
+lang2FontColor=0x00FFFF00
+
+marginTop=32
+marginBottom=36
+marginHorizontal=12
