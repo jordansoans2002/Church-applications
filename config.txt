@@ -1,6 +1,6 @@
 macroPPTPath=C:\Users\admin\Desktop\Church\Church-applications\PPT macros\Macro presentation.pptm
 songListPath=C:\Users\admin\Desktop\Church\Church-applications\Song list.txt
-songLyricsPath=C:\Users\admin\Desktop\Church\Church-applications\Song Lyrics\
+songLyricsPath=C:\Users\admin\Desktop\Church\Church-applications\Songs\
 
 defaultLang=english
 

@@ -1,27 +1,10 @@
+Param($hymn,$songList)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName Microsoft.Office.Interop.PowerPoint
 
-# Function to read the song list file
-function Read-SongList($filePath) {
-    $songList = @()
-    $lines = Get-Content $filePath
-    for ($i = 0; $i -lt $lines.Count; $i += 3) {
-        $song = @{
-            Name = $lines[$i]
-            Orientation = $lines[$i + 1]
-            Languages = @($lines[$i + 2])
-        }
-        if ($i + 2 -lt $lines.Count -and $lines[$i + 2] -match '^[A-Za-z0-9]') {
-            $song.Languages += $lines[$i + 2]
-            $i++
-        }
-        $songList += $song
-    }
-    return $songList
-}
 
 # Function to check if lyrics files exist
-function Check-LyricsExist($songName, $languages, $lyricsFolder) {
+function Find-Lyrics($songName, $languages, $lyricsFolder) {
     foreach ($lang in $languages) {
         $fileName = "${songName}_${lang}.txt"
         $filePath = Join-Path $lyricsFolder $fileName
@@ -115,12 +98,12 @@ function Add-LyricsSlide($presentation, $lyrics1, $lyrics2 = $null, $orientation
         $textBox2.TextFrame.TextRange.Font.Color.RGB = [int]$global:config["lang2FontColor"]
     } else {
         # Single language
-        $textBox = $slide.Shapes.AddTextbox([Microsoft.Office.Core.MsoTextOrientation]::msoTextOrientationHorizontal,$global:config["marginHorizontal"],$global:config["marginTop"],$slideWidth - $global:config["marginHorizontal"] * 2,$slideHeight - $global:config["marginBottom"])
+        $textBox = $slide.Shapes.AddTextbox([Microsoft.Office.Core.MsoTextOrientation]::msoTextOrientationHorizontal,[int]$global:config["marginHorizontal"],[int]$global:config["marginTop"],$slideWidth - [int]$global:config["marginHorizontal"] * 2,$slideHeight - [int]$global:config["marginBottom"])
         $textBox.TextFrame.TextRange.Text = $lyrics1
-        $textBox1.TextFrame.TextRange.ParagraphFormat.Alignment = [Microsoft.Office.Interop.PowerPoint.PpParagraphAlignment]::ppAlignCenter
-        $textBox1.TextFrame.TextRange.Font.Name = $global:config["lyricsFontName"]
-        $textBox1.TextFrame.TextRange.Font.Size = [int]$global:config["lyricsFontSize"]
-        $textBox1.TextFrame.TextRange.Font.Color.RGB = [int]$global:config["lang1FontColor"]
+        $textBox.TextFrame.TextRange.ParagraphFormat.Alignment = [Microsoft.Office.Interop.PowerPoint.PpParagraphAlignment]::ppAlignCenter
+        $textBox.TextFrame.TextRange.Font.Name = $global:config["lyricsFontName"]
+        $textBox.TextFrame.TextRange.Font.Size = [int]$global:config["lyricsFontSize"]
+        $textBox.TextFrame.TextRange.Font.Color.RGB = [int]$global:config["lang1FontColor"]
 
     }
 }
@@ -137,8 +120,8 @@ function Add-Citation-Textbox($slide, $citation){
 
 $global:config = @{}
 # TODO convert to relative file path and put script and config file in same directory
-Get-Content "C:\Users\admin\Desktop\Church\Church-applications\config.txt" | Foreach-Object{
-   $configText = $_.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
+Get-Content "./config.txt" | Foreach-Object{
+#    $configText = $_.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
    $key, $value = $_.Split("=")
    if($key -and $value){
 	$global:config[$key.Trim()] = $value.Trim()
@@ -147,16 +130,15 @@ Get-Content "C:\Users\admin\Desktop\Church\Church-applications\config.txt" | For
 
 
 # Main script
-$songListFile = $global:config["songListPath"]
-$lyricsFolder = $global:config["songLyricsPath"]
-$outputFile = "C:\Users\admin\Desktop\LyricsPresentation.pptx"
-
-$songList = Read-SongList $songListFile
+if($hymn){
+    $lyricsFolder = $global:config["hymnLyricsPath"]
+} else {
+    $lyricsFolder = $global:config["songLyricsPath"]
+}
 
 $presentation = New-PowerPointPresentation
-
 foreach ($song in $songList) {
-    if (Check-LyricsExist $song.Name $song.Languages $lyricsFolder) {
+    if (Find-Lyrics $song.Name $song.Languages $lyricsFolder) {
         $lyrics1 = Read-Lyrics $song.Name $song.Languages[0] $lyricsFolder
         if ($song.Languages.Count -eq 2) {
             $lyrics2 = Read-Lyrics $song.Name $song.Languages[1] $lyricsFolder
@@ -175,7 +157,7 @@ foreach ($song in $songList) {
             $citation = $song.Name
         }
 
-        if ($lyrics1.Count -ne $lyrics2.Count){
+        if ($lyrics2 -and $lyrics1.Count -ne $lyrics2.Count){
             [System.Windows.Forms.MessageBox]::Show($song.Languages[1] + " and " + $song.Languages[2] + "slides for song " + $song.Name + " do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song.", "Slide count mismatch", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
             continue
         }

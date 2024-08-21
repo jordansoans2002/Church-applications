@@ -1,8 +1,5 @@
-macroPPTPath=C:\Users\admin\Desktop\Church\Church-applications\PPT macros\Macro presentation.pptm
-songListPath=C:\Users\admin\Desktop\Church\Church-applications\Song list.txt
-songLyricsPath=C:\Users\admin\Desktop\Church\Church-applications\Song Lyrics\
-
-defaultLang=english
+songLyricsPath=C:\Users\admin\Desktop\Church\Church-applications\Songs\
+hymnLyricsPath=C:\Users\admin\Desktop\Church\Church-applications\Hymns\
 
 titleFontSize=60
 titleFontName=Times New Roman
