@@ -1,4 +1,4 @@
-Param($hymn)
+Param()
 $global:config = @{}
 $global:lyricsPath = ""
 $global:songList = @()
@@ -198,7 +198,8 @@ Get-Content "C:\Users\admin\Desktop\Church\Church-applications\PPT scripts\confi
          $global:config[$key.Trim()] = $value.Trim()
     }
 }
-if($hymn){
+$hymn = Read-Host "Press 'Y' to make Hymn ppt, otherwise press any other key"
+if($hymn -eq "Y"){
 	$global:lyricsPath = $global:config["hymnLyricsPath"] 
 } else {
 	$global:lyricsPath = $global:config["songLyricsPath"]
@@ -298,4 +299,4 @@ while($true){
 }
 Show-Songs-Settings
 
-& ".\Create-PPT.ps1" -songList $global:songList
+& ".\Create-PPT.ps1" -hymn $hymn -songList $global:songList
