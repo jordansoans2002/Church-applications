@@ -1,4 +1,3 @@
-Param()
 $global:config = @{}
 $global:lyricsPath = ""
 $global:songList = @()
@@ -191,7 +190,7 @@ function Get-Song(){
 
 
 # try to put relative path (./config.txt)
-Get-Content "C:\Users\admin\Desktop\Church\Church-applications\PPT scripts\config.txt" | Foreach-Object{
+Get-Content "./config.txt" | Foreach-Object{
     # $configText = $_.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
     $key, $value = $_.Split("=")
     if($key -and $value){
@@ -299,4 +298,4 @@ while($true){
 }
 Show-Songs-Settings
 
-& ".\Create-PPT.ps1" -hymn $hymn -songList $global:songList
+& "PPT Scripts\Create-PPT.ps1" -hymn $hymn -songList $global:songList
