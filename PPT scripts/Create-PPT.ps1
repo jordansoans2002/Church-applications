@@ -45,7 +45,8 @@ function New-PowerPointPresentation {
 # Function to add a title slide for a song
 function Add-TitleSlide($presentation, $songName, $citation="") {
     $slide = $presentation.Slides.Add($presentation.Slides.Count + 1, 1) # 1 is the layout type for Title Slide
-    $slide.Name = "songPPT$($presentation.Slides.Count + 1)"
+    # prefix of slide name is used as option and to identify the ppts created by this script
+    $slide.Name = "songPPT$($presentation.Slides.Count)"
     $slide.Shapes.Title.Name = "lyricsLang1"
     $slide.Shapes.Title.TextFrame.TextRange.Text = $songName
     Add-Citation-Textbox $slide $citation
@@ -60,7 +61,8 @@ function Add-TitleSlide($presentation, $songName, $citation="") {
 # Function to add a slide with lyrics
 function Add-LyricsSlide($presentation, $lyrics1, $lyrics2 = $null, $orientation, $citation="") {
     $slide = $presentation.Slides.Add($presentation.Slides.Count + 1, 12) # 12 is the layout type for Blank
-    $slide.Name = "songPPT$($presentation.Slides.Count + 1)"
+    # prefix of slide name is used as option and to identify the ppts created by this script
+    $slide.Name = "songPPT$($presentation.Slides.Count)"
     Add-Citation-Textbox $slide $citation
     $slide.FollowMasterBackground = $false
     $slide.Background.Fill.ForeColor.RGB = [int]$global:config["lyricsBackground"]

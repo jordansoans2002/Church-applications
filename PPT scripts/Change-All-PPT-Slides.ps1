@@ -3,13 +3,24 @@ Add-type -AssemblyName office
 $application = New-Object -ComObject PowerPoint.Application
 
 $ppts = @()
+$furthestSongPpt = "" # used only with "songPPT" option
 foreach($pres in $application.Presentations){
     if ($pres.SlideShowWindow){
         $pos  = $pres.SlideShowWindow.View.CurrentShowPosition
-        if($pptOption -eq "all" -or $pptOption -eq "single" -or $pres.Slides[$pos].Name.StartsWith($option)){
+        if($pptOption -eq "all" -or $pptOption -eq "single"){
             $ppts += @{
                 Pres = $pres
                 Pos = $pos
+            }
+        } elseif($pres.Slides[$pos].Name.StartsWith($pptOption)){
+            $ppts += @{
+                Pres = $pres
+                Pos = $pos
+            }
+            $slideName = $pres.Slides[$pos].Name
+            $slideNumber = [int]$slideName.Substring($slideName.IndexOf($pptOption)+$pptOption.Length) * $count
+            if(-not $furthestSongPpt -or $slideNumber -gt $furthestSongPpt){
+                $furthestSongPpt = [int]$slideNumber
             }
         }
     }   
@@ -27,7 +38,12 @@ if($ppts.Length -eq 0){
     $pptEnd = $false
     foreach($ppt in $ppts){
         if ($ppt.Pos+$count -ge 1 -and $ppt.Pos+$count -le $ppt.Pres.slides.Count){
-            $ppt.Pres.SlideShowWindow.View.GotoSlide($ppt.Pos + $count)
+            if($furthestSongPpt){
+                $gotoSlide = $ppt.Pres.Slides("$pptOption$([Math]::Abs($furthestSongPpt)+$count)").SlideIndex
+                $ppt.Pres.SlideShowWindow.View.GotoSlide($gotoSlide)
+            }else{
+                $ppt.Pres.SlideShowWindow.View.GotoSlide($ppt.Pos + $count)
+            }
             if($slideOption -eq 'text'){
                 $slide = $ppt.Pres.slides[$ppt.pos+$count]
                 foreach($shape in $slide.Shapes){
