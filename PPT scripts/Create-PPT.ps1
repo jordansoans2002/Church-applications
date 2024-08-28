@@ -45,6 +45,8 @@ function New-PowerPointPresentation {
 # Function to add a title slide for a song
 function Add-TitleSlide($presentation, $songName, $citation="") {
     $slide = $presentation.Slides.Add($presentation.Slides.Count + 1, 1) # 1 is the layout type for Title Slide
+    $slide.Name = "songPPT$($presentation.Slides.Count + 1)"
+    $slide.Shapes.Title.Name = "lyricsLang1"
     $slide.Shapes.Title.TextFrame.TextRange.Text = $songName
     Add-Citation-Textbox $slide $citation
     $slide.Shapes.Title.TextFrame.TextRange.Font.Name = $global:config["titleFontName"]
@@ -58,6 +60,7 @@ function Add-TitleSlide($presentation, $songName, $citation="") {
 # Function to add a slide with lyrics
 function Add-LyricsSlide($presentation, $lyrics1, $lyrics2 = $null, $orientation, $citation="") {
     $slide = $presentation.Slides.Add($presentation.Slides.Count + 1, 12) # 12 is the layout type for Blank
+    $slide.Name = "songPPT$($presentation.Slides.Count + 1)"
     Add-Citation-Textbox $slide $citation
     $slide.FollowMasterBackground = $false
     $slide.Background.Fill.ForeColor.RGB = [int]$global:config["lyricsBackground"]
@@ -81,7 +84,9 @@ function Add-LyricsSlide($presentation, $lyrics1, $lyrics2 = $null, $orientation
         }
 
         $textBox1 = $slide.Shapes.AddTextbox([Microsoft.Office.Core.MsoTextOrientation]::msoTextOrientationHorizontal,[int]$global:config["marginHorizontal"],[int]$global:config["marginTop"],$textBoxWidth,$textBoxHeight)
+        $textBox1.Name = "lyricsLang1"
         $textBox2 = $slide.Shapes.AddTextbox([Microsoft.Office.Core.MsoTextOrientation]::msoTextOrientationHorizontal,$x_start,$y_start,$textBoxWidth,$textBoxHeight)
+        $textBox1.Name = "lyricsLang2"
         
         $textBox1.TextFrame.TextRange.Text = $lyrics1
         $textBox2.TextFrame.TextRange.Text = $lyrics2
@@ -99,6 +104,7 @@ function Add-LyricsSlide($presentation, $lyrics1, $lyrics2 = $null, $orientation
     } else {
         # Single language
         $textBox = $slide.Shapes.AddTextbox([Microsoft.Office.Core.MsoTextOrientation]::msoTextOrientationHorizontal,[int]$global:config["marginHorizontal"],[int]$global:config["marginTop"],$slideWidth - [int]$global:config["marginHorizontal"] * 2,$slideHeight - [int]$global:config["marginBottom"])
+        $textBox.Name = "lyricsLang1"
         $textBox.TextFrame.TextRange.Text = $lyrics1
         $textBox.TextFrame.TextRange.ParagraphFormat.Alignment = [Microsoft.Office.Interop.PowerPoint.PpParagraphAlignment]::ppAlignCenter
         $textBox.TextFrame.TextRange.Font.Name = $global:config["lyricsFontName"]

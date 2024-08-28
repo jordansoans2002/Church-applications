@@ -18,13 +18,11 @@ fs.readFileSync('../config.txt', 'utf-16le').toString().split(/\r?\n/).forEach(l
     arr = line.split('=')
     config[arr[0]]=arr[1]
 })
-console.log(config)
 
 const ps = new PowerShell({
     executionPolicy: 'Bypass',
     noProfile: true
 })
-const hymnsPath = config['hymnLyricsPath']
 
 app.get('/', (req,res) => {
     console.log("test request recieved")
@@ -36,17 +34,42 @@ app.get('/', (req,res) => {
 app.post('/change_slide', async (req,res) => {
     console.log(req['body'])
     
-    const command = PowerShell.command`& "../PPT scripts/Change-All-PPT-Slides.ps1" -count ${req['body']['count']}`
+    const count = req.body.count
+    const option = req.body.option
+    const command = PowerShell.command`& "../PPT scripts/Change-All-PPT-Slides.ps1" -count ${count} -pptOption ${option}`
     const output = await ps.invoke(command)
-    console.log(output)
-    console.log(output['stdout'].toString())
-    console.log(output['stderr'].toString())
+    const stdout = output.stdout.toString()
+    console.log(stdout)
+    const statusCode = Number(stdout.substring(0,stdout.indexOf(':')))
+    const msg = stdout.substring(stdout.indexOf(':')+1)
+    res.status(statusCode).json(
+        {
+            "message":msg
+        }
+    )
+
+    // console.log(stdout.toString('utf16le'))
+    // const dict = JSON.parse(stdout.toString('utf8').replace('\n',' '))
+    // console.log("stdout:"+typeof(dict)+" "+dict)
+    // console.log(typeof(output.stderr.toString()))
+
+    // const responseStr = stdout[stdout.length-1]
+    // const statusCode = Number(responseStr.substring(0,responseStr.indexOf(':')))
+    // const msg = responseStr.substring(responseStr.indexOf(':')+1)
+    // res.status(statusCode).json(
+    //     {
+    //         "message":msg,
+    //         "lyricsLang1":stdout[0],
+    //         "lyricsLang2":stdout[1]
+    //     }
+    // )
+
+
     // exec('& "../PPT scripts/Change-All-PPT-Slides.ps1" -count 1', {'shell':'powershell.exe'},(error,stdout,stderr) => {
     //     console.log(error)
     //     console.log(stdout)
     //     console.log(stderr)
     // })
-    res.send("reponse")
 })
 
 app.get('/hymns', (req,res) => {
