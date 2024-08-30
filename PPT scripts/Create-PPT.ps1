@@ -1,4 +1,4 @@
-Param($hymn,$songList)
+Param($hymn,$songList,$startSlideShow)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName Microsoft.Office.Interop.PowerPoint
 
@@ -9,6 +9,7 @@ function Find-Lyrics($songName, $languages, $lyricsFolder) {
         $fileName = "${songName}_${lang}.txt"
         $filePath = Join-Path $lyricsFolder $fileName
         if (-not (Test-Path $filePath)) {
+            Write-Host "error:Lyrics file not found for '$songName' in language '$lang'."
             [System.Windows.Forms.MessageBox]::Show("Error: Lyrics file not found for '$songName' in language '$lang'.", "File Not Found", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
             return $false
         }
@@ -33,13 +34,6 @@ function Read-Lyrics($songName, $language, $lyricsFolder) {
         }
     }
     return $slides
-}
-
-# Function to create a new PowerPoint presentation
-function New-PowerPointPresentation {
-    $application = New-Object -ComObject PowerPoint.Application
-    $presentation = $application.Presentations.Add()
-    return $presentation
 }
 
 # Function to add a title slide for a song
@@ -128,7 +122,7 @@ function Add-Citation-Textbox($slide, $citation){
 
 $global:config = @{}
 # TODO convert to relative file path and put script and config file in same directory
-Get-Content "./config.txt" | Foreach-Object{
+Get-Content "C:\Users\admin\Desktop\Church\Church-applications\config.txt" | Foreach-Object{
 #    $configText = $_.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
    $key, $value = $_.Split("=")
    if($key -and $value){
@@ -144,8 +138,23 @@ if($hymn){
     $lyricsFolder = $global:config["songLyricsPath"]
 }
 
-$presentation = New-PowerPointPresentation
+$application = New-Object -ComObject PowerPoint.Application
+$presentation = $application.Presentations.Add()
+
 foreach ($song in $songList) {
+    # logic to create languages array when script is called from backend server
+    if($song.Languages.Length -gt 2){
+        $langs = $song.Languages
+        $song.Languages = @()
+        if($langs.IndexOf(';') -gt 2){
+            $song.Languages += $langs.Substring(0,$langs.IndexOf(';'))
+            $song.Languages += $langs.Substring($langs.IndexOf(';')+1)
+        } else {
+            $song.Languages += $langs
+        }
+
+    }
+
     if (Find-Lyrics $song.Name $song.Languages $lyricsFolder) {
         $lyrics1 = Read-Lyrics $song.Name $song.Languages[0] $lyricsFolder
         if ($song.Languages.Count -eq 2) {
@@ -166,6 +175,7 @@ foreach ($song in $songList) {
         }
 
         if ($lyrics2 -and $lyrics1.Count -ne $lyrics2.Count){
+            Write-Host "warning:$($song.Languages[1]) and $($song.Languages[2]) slides for song $($song.Name) do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song."
             [System.Windows.Forms.MessageBox]::Show($song.Languages[1] + " and " + $song.Languages[2] + "slides for song " + $song.Name + " do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song.", "Slide count mismatch", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
             continue
         }
@@ -175,6 +185,13 @@ foreach ($song in $songList) {
             Add-LyricsSlide $presentation $lyrics1[$i].Trim() $(if ($lyrics2) {$lyrics2[$i].Trim()} else {$null}) $song.Orientation $citation
         }
     }
+}
+
+if($startSlideShow){
+    $pptCreation = $presentation.SlideShowSettings.Run()
+    Write-Host "200:Slide show started"
+} else {
+    Write-Host "200:PPT created"
 }
 #$presentation.SaveAs($outputFile)
 #$presentation.Close()

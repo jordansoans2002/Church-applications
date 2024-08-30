@@ -24,12 +24,15 @@ const ps = new PowerShell({
     noProfile: true
 })
 
+
+
 app.get('/', (req,res) => {
     console.log("test request recieved")
     res.status(200).json({
         "success":true
     })
 })
+
 
 app.post('/change_slide', async (req,res) => {
     console.log(req['body'])
@@ -72,15 +75,51 @@ app.post('/change_slide', async (req,res) => {
     // })
 })
 
-app.get('/hymns', (req,res) => {
-    console.log("request recieved")
-    res.status(200).json({
-        hymns : fs.readdir(hymnsPath, (err, files) => {
-            if(!err){
-                res.status(200).json({
-                    hymns : files
-                })
-            }
-        })
+
+app.get('/songs',(req,res) => {
+    console.log("song request recieved")
+    fs.readdir(config["songLyricsPath"], (err, files) => {
+        if(err){
+            console.log(err)
+        } else {
+            statusCode = (files.length == 0)? 204:200
+            res.status(statusCode).json({
+                songs : files
+            })
+        }
     })
+})
+
+
+app.get('/hymns', (req,res) => {
+    console.log("hymn request recieved")
+    fs.readdir(config["hymnLyricsPath"], (err, files) => {
+        if(err){
+            console.log(err)
+        }else {
+            statusCode = (files.length == 0)? 204:200
+            res.status(statusCode).json({
+                hymns : files
+            })
+        }
+    })
+})
+
+app.get('/create_ppt',async (req,res) => {
+    console.log("test ppt creation")
+    isHymn = req.body.isHymn
+    songList = req.body.songList
+    startSlideShow = req.body.startSlideShow
+
+    const command = PowerShell.command`& "../PPT Scripts/Create-PPT.ps1" -hymn ${isHymn} -songList ${songList} -startSlideShow ${startSlideShow}`
+    const output = await ps.invoke(command)
+    const stdout = output.stdout.toString().split('\n')
+    console.log(stdout)
+    const statusCode = Number(stdout[stdout.length-1].substring(0,stdout.indexOf(':')))
+    const msg = stdout.substring(stdout[stdout.length-1].indexOf(':')+1)
+    res.status(statusCode).json(
+        {
+            "message":msg
+        }
+    )
 })
