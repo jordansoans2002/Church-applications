@@ -21,19 +21,24 @@ function Find-Lyrics($songName, $languages, $lyricsFolder) {
 function Read-Lyrics($songName, $language, $lyricsFolder) {
     $fileName = "${songName}_${language}.txt"
     $filePath = Join-Path $lyricsFolder $fileName
-    $lyrics = Get-Content $filePath
-    $slides = @()
-    $slideText = ""
-    for ($i = 0; $i -lt $lyrics.Count; $i++) {
-        if($lyrics[$i] -eq "" -or $i -eq $lyrics.Count-1){
-            # We've encountered an empty line, add the current slide and start a new one
-            $slides += $slideText.Trim()
-            $slideText = ""
-        } else {
-            $slideText += $lyrics[$i] + "`n"
+    if (Test-Path $filePath) {
+        $lyrics = Get-Content $filePath
+        $slides = @()
+        $slideText = ""
+        for ($i = 0; $i -le $lyrics.Count; $i++) {
+            if(($lyrics[$i] -eq "" -and $i -gt 0 -and $lyrics[$i-1] -eq "") -or $i -eq $lyrics.Count){
+                # We've encountered an empty line, add the current slide and start a new one
+                $slides += $slideText.Trim()
+                $slideText = ""
+            } else {
+                $slideText += [string] $lyrics[$i] + "`n"
+            }
         }
+        return ,$slides
+    } else {
+        Write-Host "error:Lyrics file not found for '$songName' in language '$lang'."
+        return $null
     }
-    return $slides
 }
 
 # Function to add a title slide for a song
@@ -155,40 +160,41 @@ foreach ($song in $songList) {
 
     }
 
-    if (Find-Lyrics $song.Name $song.Languages $lyricsFolder) {
-        $lyrics1 = Read-Lyrics $song.Name $song.Languages[0] $lyricsFolder
-        if ($song.Languages.Count -eq 2) {
-            $lyrics2 = Read-Lyrics $song.Name $song.Languages[1] $lyricsFolder
-        } else { $lyrics2 =  $null }
+    $lyrics1 = Read-Lyrics $song.Name $song.Languages[0] $lyricsFolder
+    
+    if ($song.Languages.Count -eq 2) {
+        $lyrics2 = Read-Lyrics $song.Name $song.Languages[1] $lyricsFolder
+    } else { 
+        $lyrics2 =  $null 
+    }
 
-        $citation = ""
-        if ($lyrics1[0] -ne "" -and -not $lyrics1[0].contains("`n")){
-            $citation = $lyrics1[0]
-            $lyrics1 = $lyrics1[1..$lyrics1.Length]
-        } if ($lyrics2 -and $lyrics2[0] -ne "" -and -not $lyrics2[0].contains("`n")){
-            if ($citation -eq "") {
-                $citation = $lyrics2[0]
-            }
-            $lyrics2 = $lyrics2[1..$lyrics2.Length]
-        } if ($citation -eq "") {
-            $citation = $song.Name
+    $citation = ""
+    if ($lyrics1[0] -ne "" -and -not $lyrics1[0].contains("`n")){
+        $citation = $lyrics1[0]
+        $lyrics1 = $lyrics1[1..$lyrics1.Length]
+    } if ($lyrics2 -and $lyrics2[0] -and -not $lyrics2[0].contains("`n")){
+        if ($citation -eq "") {
+            $citation = $lyrics2[0]
         }
+        $lyrics2 = $lyrics2[1..$lyrics2.Length]
+    } if ($citation -eq "") {
+        $citation = $song.Name
+    }
 
-        if ($lyrics2 -and $lyrics1.Count -ne $lyrics2.Count){
-            Write-Host "warning:$($song.Languages[1]) and $($song.Languages[2]) slides for song $($song.Name) do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song."
-            [System.Windows.Forms.MessageBox]::Show($song.Languages[1] + " and " + $song.Languages[2] + "slides for song " + $song.Name + " do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song.", "Slide count mismatch", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
-            continue
-        }
+    if ($lyrics2 -and $lyrics1.Count -ne $lyrics2.Count){
+        Write-Host "warning:$($song.Languages[1]) and $($song.Languages[2]) slides for song $($song.Name) do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song."
+        [System.Windows.Forms.MessageBox]::Show($song.Languages[1] + " and " + $song.Languages[2] + "slides for song " + $song.Name + " do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song.", "Slide count mismatch", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        continue
+    }
 
-        Add-TitleSlide $presentation $song.Name $citation
-        for ($i = 0; $i -lt $lyrics1.Count; $i++) {
-            Add-LyricsSlide $presentation $lyrics1[$i].Trim() $(if ($lyrics2) {$lyrics2[$i].Trim()} else {$null}) $song.Orientation $citation
-        }
+    Add-TitleSlide $presentation $song.Name $citation
+    for ($i = 0; $i -lt $lyrics1.Count; $i++) {
+        Add-LyricsSlide $presentation $lyrics1[$i] $(if ($lyrics2) {$lyrics2[$i]} else {$null}) $song.Orientation $citation
     }
 }
 
 if($startSlideShow){
-    $pptCreation = $presentation.SlideShowSettings.Run()
+    $presentation.SlideShowSettings.Run()
     Write-Host "200:Slide show started"
 } else {
     Write-Host "200:PPT created"
