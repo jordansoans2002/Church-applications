@@ -3,6 +3,7 @@ const {PowerShell} = require('node-powershell')
 var fs = require('fs')
 var bodyParser = require('body-parser')
 var express = require('express')
+const { constants } = require('buffer')
 
 const app = express()
 app.use(express.json())
@@ -12,11 +13,12 @@ app.listen(
 )
 
 var config = {}
+// need to leave first line of config file blank, first field is undefined
 fs.readFileSync('../config.txt', 'utf-16le').toString().split(/\r?\n/).forEach(line => {
     if(line.length==0 || line.startsWith('#') || line.startsWith('//'))
         return
     arr = line.split('=')
-    config[arr[0]]=arr[1]
+    config[arr[0].toString()]=arr[1]
 })
 
 const ps = new PowerShell({
@@ -45,11 +47,9 @@ app.post('/change_slide', async (req,res) => {
     console.log(stdout)
     const statusCode = Number(stdout.substring(0,stdout.indexOf(':')))
     const msg = stdout.substring(stdout.indexOf(':')+1)
-    res.status(statusCode).json(
-        {
-            "message":msg
-        }
-    )
+    res.status(statusCode).json({
+        "message":"MEssage"
+    })
 
     // console.log(stdout.toString('utf16le'))
     // const dict = JSON.parse(stdout.toString('utf8').replace('\n',' '))
@@ -75,6 +75,47 @@ app.post('/change_slide', async (req,res) => {
     // })
 })
 
+
+app.get('/create_ppt', (req,res) => {
+    fs.access(config['songLyricsPath'], fs.constants.F_OK, (err) => {
+        if(err){
+            console.log(err)
+        } else {
+            fs.access(config['hymnLyricsPath'], fs.constants.F_OK, (error) => {
+                if(error){
+                    console.log(error)
+                } else {
+                    res.status(200).json({
+                        "message":"PPT creation setup is ready"
+                    })
+                }
+            })
+        }
+    })
+})
+
+app.get('/lyrics_files', (req,res) => {
+    console.log("request lyrics")
+    fs.readdir(config["songLyricsPath"], (err, songs) => {
+        if(err){
+            console.log(err)
+        } else {
+            fs.readdir(config["hymnLyricsPath"], (error, hymns) => {
+                if(error){
+                    console.log(error)
+                } else {
+                    statusCode = (songs.length + hymns.length == 0)? 204:200
+                    console.log(songs)
+                    console.log(hymns)
+                    res.status(statusCode).json({
+                        "songs" : songs,
+                        "hymns" : hymns
+                    })
+                }
+            })
+        }
+    })
+})
 
 app.get('/songs',(req,res) => {
     console.log("song request recieved")
@@ -105,7 +146,7 @@ app.get('/hymns', (req,res) => {
     })
 })
 
-app.get('/create_ppt',async (req,res) => {
+app.post('/create_ppt',async (req,res) => {
     console.log("test ppt creation")
     isHymn = req.body.isHymn
     songList = req.body.songList
