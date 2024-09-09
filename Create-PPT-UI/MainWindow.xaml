@@ -1,0 +1,48 @@
+﻿<Window x:Class="Create_PPT_GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Create_PPT_GUI"
+        mc:Ignorable="d"
+        WindowState="Maximized"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.7*"/>
+            <RowDefinition Height="5" />
+            <RowDefinition Height="0.3*"/>
+        </Grid.RowDefinitions>
+
+        <Grid >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.2*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="0.6*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="0.2*"/>
+            </Grid.ColumnDefinitions>
+
+            <Rectangle Fill="Orange" />
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+            <Rectangle Grid.Column="2" Fill="DodgerBlue" />
+            <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"/>
+            <Rectangle Grid.Column="4" Fill="Orange" />
+        </Grid>
+
+        <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch"/>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Rectangle Grid.Column="0" Fill="DodgerBlue" />
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+            <Rectangle Grid.Column="2" Fill="Orange" />
+        </Grid>
+
+    </Grid>
+</Window>
