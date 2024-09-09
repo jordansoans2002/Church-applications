@@ -1,17 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Create_PPT_UI
 {
@@ -24,5 +12,17 @@ namespace Create_PPT_UI
         {
             InitializeComponent();
         }
+        private void ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if(sender == lang1_textbox)
+            {
+                lang2_textbox.ScrollToVerticalOffset(e.VerticalOffset);
+            }
+            else
+            {
+                lang1_textbox.ScrollToVerticalOffset(e.VerticalOffset);
+            }
+        }
     }
+
 }
