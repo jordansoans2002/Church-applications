@@ -4,9 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Create_PPT_UI"
+        xmlns:View="clr-namespace:Create_PPT_UI.View"
         mc:Ignorable="d"
         WindowState="Maximized"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="640" Width="1160">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="0.7*"/>
@@ -16,14 +17,33 @@
 
         <Grid >
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.2*"/>
+                <ColumnDefinition Width="0.2*" MinWidth="250"/>
                 <ColumnDefinition Width="5"/>
                 <ColumnDefinition Width="0.6*" MinWidth="550"/>
                 <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="0.2*"/>
+                <ColumnDefinition Width="0.15*" MinWidth="200"/>
+                <ColumnDefinition Width="25"/>
             </Grid.ColumnDefinitions>
 
-            <Rectangle Fill="Orange" />
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Song List" FontSize="20" FontWeight="ExtraBold" Margin="5,10"/>
+                <ListView Grid.Row="1"
+                          HorizontalContentAlignment="Stretch"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ItemsSource="{Binding Songs}"
+                          SelectedItem="{Binding SelectedSong}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <View:Song />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+            
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
@@ -47,47 +67,89 @@
                         HorizontalAlignment="Center"/>
                     <Button
                         Height="25" Width="75" Margin="5"
-                        Content="Add Song" />
+                        Content="Add Song"
+                        Command="{Binding AddSong}"/>
                     <Button 
                         Height="25" Width="75" Margin="5"
-                        Content="New Song" />
+                        Content="New Song"
+                        Command="{Binding AddSong}"/>
                 </StackPanel>
 
                 <ComboBox Grid.Row="1" IsEnabled="False" 
-                        HorizontalContentAlignment="Center" />
-                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                        HorizontalContentAlignment="Center"
+                        Text="{Binding SelectedSong.lang1, UpdateSourceTrigger=PropertyChanged}"/>
+                <ComboBox Grid.Row="1" Grid.Column="1"
                         IsEnabled="False"
-                        HorizontalContentAlignment="Center" />
+                        HorizontalContentAlignment="Center"
+                        Text="{Binding SelectedSong.lang2, UpdateSourceTrigger=PropertyChanged}"/>
 
                 <TextBox Grid.Row="2"
-                        Name="lang1_textbox"
-                        IsEnabled="False"
+                        Name="lang1_textbox" FontSize="14"
                         TextWrapping="Wrap" AcceptsReturn="True" 
                         VerticalScrollBarVisibility="Auto"
-                        ScrollViewer.ScrollChanged="ScrollChanged" />
-                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
-                        IsEnabled="False"
-                        Name="lang2_textbox" 
+                        ScrollViewer.ScrollChanged="ScrollChanged"
+                        Text="{Binding SelectedSong.text1, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Grid.Row="2" Grid.Column="1"
+                        Name="lang2_textbox" FontSize="14"
                         TextWrapping="Wrap" AcceptsReturn="True" 
                         VerticalScrollBarVisibility="Auto"
-                        ScrollViewer.ScrollChanged="ScrollChanged"/>
+                        ScrollViewer.ScrollChanged="ScrollChanged"
+                        Text="{Binding SelectedSong.text2, UpdateSourceTrigger=PropertyChanged}"/>
             </Grid>
             <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"/>
-            <Rectangle Grid.Column="4" Fill="Orange" />
+            <Grid Grid.Column="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Settings" FontSize="20" FontWeight="ExtraBold" Margin="5,10"/>
+                <ListView Grid.Row="1" 
+                          ItemsSource="{Binding Settings}"
+                          HorizontalContentAlignment="Stretch"  
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          Padding="2,0,0,0">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="Padding" Value="0"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <View:Settings />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+            <Grid Grid.Column="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <ToggleButton Content="Slide settings">
+                    <ToggleButton.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </ToggleButton.LayoutTransform>
+                </ToggleButton>
+                <ToggleButton Grid.Row="1" Content="Presentation settings">
+                    <ToggleButton.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </ToggleButton.LayoutTransform>
+                </ToggleButton>
+                <ToggleButton Grid.Row="2" Content="Application settings">
+                    <ToggleButton.LayoutTransform>
+                        <RotateTransform Angle="-90" />
+                    </ToggleButton.LayoutTransform>
+                </ToggleButton>
+            </Grid>
         </Grid>
 
         <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch"/>
 
         <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition />
-                <ColumnDefinition Width="5"/>
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-
-            <Rectangle Grid.Column="0" Fill="DodgerBlue" />
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
-            <Rectangle Grid.Column="2" Fill="Orange" />
+            <Rectangle Fill="Khaki" />
         </Grid>
 
     </Grid>

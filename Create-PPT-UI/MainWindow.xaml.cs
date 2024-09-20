@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Create_PPT_UI.ViewModel;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Create_PPT_UI
@@ -11,7 +12,11 @@ namespace Create_PPT_UI
         public MainWindow()
         {
             InitializeComponent();
+            MainWindowViewModel viewModel = new MainWindowViewModel();
+            DataContext = viewModel;
         }
+
+
         private void ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             if(sender == lang1_textbox)
