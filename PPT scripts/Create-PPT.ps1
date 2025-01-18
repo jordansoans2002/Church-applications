@@ -26,7 +26,8 @@ function Read-Lyrics($songName, $language, $lyricsFolder) {
         $slides = @()
         $slideText = ""
         for ($i = 0; $i -le $lyrics.Count; $i++) {
-            if(($lyrics[$i] -eq "" -and $i -gt 0 -and $lyrics[$i-1] -eq "") -or $i -eq $lyrics.Count){
+            # if(($lyrics[$i] -eq "" -and $i -gt 0 -and $lyrics[$i-1] -eq "") -or $i -eq $lyrics.Count){  # seperates slides by double line
+            if(($lyrics[$i] -eq "" -and $i -gt 0) -or $i -eq $lyrics.Count){  # seperates slides by single line
                 # We've encountered an empty line, add the current slide and start a new one
                 $slides += $slideText.Trim()
                 $slideText = ""
@@ -48,7 +49,7 @@ function Add-TitleSlide($presentation, $songName, $citation="") {
     $slide.Name = "songPPT$($presentation.Slides.Count)"
     $slide.Shapes.Title.Name = "lyricsLang1"
     $slide.Shapes.Title.TextFrame.TextRange.Text = $songName
-    Add-Citation-Textbox $slide $citation
+    #Add-Citation-Textbox $slide $citation
     $slide.Shapes.Title.TextFrame.TextRange.Font.Name = $global:config["titleFontName"]
     $slide.Shapes.Title.TextFrame.TextRange.Font.Size = [int]$global:config["titleFontSize"]
     $slide.Shapes.Title.TextFrame.TextRange.Font.Color.RGB = [int]$global:config["titleFontColor"]
@@ -62,7 +63,7 @@ function Add-LyricsSlide($presentation, $lyrics1, $lyrics2 = $null, $orientation
     $slide = $presentation.Slides.Add($presentation.Slides.Count + 1, 12) # 12 is the layout type for Blank
     # prefix of slide name is used as option and to identify the ppts created by this script
     $slide.Name = "songPPT$($presentation.Slides.Count)"
-    Add-Citation-Textbox $slide $citation
+    #Add-Citation-Textbox $slide $citation
     $slide.FollowMasterBackground = $false
     $slide.Background.Fill.ForeColor.RGB = [int]$global:config["lyricsBackground"]
     
