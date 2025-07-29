@@ -30,7 +30,7 @@ def load_birthdays(file_path, sheet):
     df['DOB'] = pd.to_datetime(df['DOB'], dayfirst=True, errors='coerce').dt.date
     # Drop any rows where parsing failed
     df = df.dropna(subset=['DOB'])
-    
+
     # Return list of dicts: { 'Name': str, 'DOB': date }
     return df.to_dict(orient='records')
 
@@ -42,6 +42,26 @@ def get_todays_birthdays(birthdays):
         p for p in birthdays
         if p['DOB'].month == today.month and p['DOB'].day == today.day
     ]
+
+
+def get_weekly_birthdays(birthdays):
+    today = datetime.date.today()
+
+    # Only check if today is Sunday
+    if today.weekday() != int(os.getenv("SUMMARY_DAY_OF_WEEK", "6")):
+        return []
+
+    # Get Monday and Sunday for this week
+    monday = today - datetime.timedelta(days=today.weekday())  # Monday
+    sunday = monday + datetime.timedelta(days=6)               # Sunday
+
+    week_birthdays = []
+    for person in birthdays:
+        birthday_this_year = person['DOB'].replace(year=today.year)
+        if monday <= birthday_this_year <= sunday:
+            week_birthdays.append(person)
+
+    return week_birthdays
 
 
 # Step 3: Send an email
@@ -70,6 +90,13 @@ if __name__ == "__main__":
     today_birthdays = get_todays_birthdays(birthdays)
     if today_birthdays:
         message = "🎈 Today's Birthdays:\n\n" + "\n".join(
-            [f"{person['Name']}" for person in today_birthdays]
+            [f"Happy birthday {person['Name']} 🥳🥳🥳" for person in today_birthdays]
+        )
+        send_email(message)
+
+    weekly_birthdays = get_weekly_birthdays(birthdays)
+    if weekly_birthdays:
+        message = "🎉 Birthdays This Week:\n\n" + "\n".join(
+            [f"{person['Name']} - {person['DOB'].strftime('%d %b')}" for person in weekly_birthdays]
         )
         send_email(message)
