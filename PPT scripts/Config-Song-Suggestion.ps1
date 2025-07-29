@@ -298,4 +298,4 @@ while($true){
 }
 Show-Songs-Settings
 
-& "PPT Scripts\Create-PPT.ps1" -hymn $hymn -songList $global:songList
+& ".\PPT Scripts\Create-PPT.ps1" -hymn $hymn -songList $global:songList

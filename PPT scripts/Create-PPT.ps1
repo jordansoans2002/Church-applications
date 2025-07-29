@@ -1,5 +1,6 @@
 Param($hymn,$songList,$startSlideShow)
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName Office
 Add-Type -AssemblyName Microsoft.Office.Interop.PowerPoint
 
 
@@ -26,14 +27,27 @@ function Read-Lyrics($songName, $language, $lyricsFolder) {
         $slides = @()
         $slideText = ""
         for ($i = 0; $i -le $lyrics.Count; $i++) {
-            # if(($lyrics[$i] -eq "" -and $i -gt 0 -and $lyrics[$i-1] -eq "") -or $i -eq $lyrics.Count){  # seperates slides by double line
-            if(($lyrics[$i] -eq "" -and $i -gt 0) -or $i -eq $lyrics.Count){  # seperates slides by single line
+            # if(($lyrics[$i] -eq "" -and $i -gt 0) -or $i -eq $lyrics.Count){  # seperates slides by single line
+            if(($lyrics[$i] -eq "" -and $i -gt 0 -and $lyrics[$i-1] -eq "") -or $i -eq $lyrics.Count){  # seperates slides by double line
                 # We've encountered an empty line, add the current slide and start a new one
                 $slides += $slideText.Trim()
                 $slideText = ""
             } else {
                 $slideText += [string] $lyrics[$i] + "`n"
             }
+
+            # separates the lyrics by the number of lines in a slide
+            # if(($lyrics[$i] -eq "" -and $i -gt 0) -or ((($slideText -split "`n").Count) -eq 2) -or $i -eq $lyrics.Count) {
+            #     $slides += $slideText.Trim()
+            #     if($lyrics[$i] -ne "" -and $i -lt $lyrics.Count) {
+            #         $slideText = [string] $lyrics[$i].Trim() + "`n"
+            #     }
+            #     else {
+            #         $slideText = ""
+            #     }
+            # } else {
+            #     $slideText += [string] $lyrics[$i].Trim() + "`n"
+            # }
         }
         return ,$slides
     } else {
@@ -49,7 +63,7 @@ function Add-TitleSlide($presentation, $songName, $citation="") {
     $slide.Name = "songPPT$($presentation.Slides.Count)"
     $slide.Shapes.Title.Name = "lyricsLang1"
     $slide.Shapes.Title.TextFrame.TextRange.Text = $songName
-    #Add-Citation-Textbox $slide $citation
+    Add-Citation-Textbox $slide $citation
     $slide.Shapes.Title.TextFrame.TextRange.Font.Name = $global:config["titleFontName"]
     $slide.Shapes.Title.TextFrame.TextRange.Font.Size = [int]$global:config["titleFontSize"]
     $slide.Shapes.Title.TextFrame.TextRange.Font.Color.RGB = [int]$global:config["titleFontColor"]
@@ -128,7 +142,7 @@ function Add-Citation-Textbox($slide, $citation){
 
 $global:config = @{}
 # TODO convert to relative file path and put script and config file in same directory
-Get-Content "C:\Users\admin\Desktop\Church\Church-applications\config.txt" | Foreach-Object{
+Get-Content ".\config.txt" | Foreach-Object{
 #    $configText = $_.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
    $key, $value = $_.Split("=")
    if($key -and $value){
@@ -144,7 +158,26 @@ if($hymn){
     $lyricsFolder = $global:config["songLyricsPath"]
 }
 
-$application = New-Object -ComObject PowerPoint.Application
+
+Write-Host "If windows is not activated first open powerpoint and then run"
+
+# my laptop doesnt allow running the latest version, the ppt created is not editable
+# open powerpoint 2010 and run this script to use  powerpoint 2010
+# change the version number according to requirement 
+try {
+    $application = [System.Runtime.InteropServices.Marshal]::GetActiveObject("PowerPoint.Application.14")
+    Write-Host "PowerPoint version found and connected."
+} catch {
+    try {
+        $application = New-Object -ComObject PowerPoint.Application.14
+        Write-Host "PowerPoint version started."
+    } catch {
+        Write-Host "error: Falling back to latest installed PowerPoint."
+        $application = New-Object -ComObject PowerPoint.Application
+    }
+}
+
+# $application = New-Object -ComObject PowerPoint.Application
 $presentation = $application.Presentations.Add()
 
 foreach ($song in $songList) {
@@ -169,18 +202,18 @@ foreach ($song in $songList) {
         $lyrics2 =  $null 
     }
 
-    $citation = ""
-    if ($lyrics1[0] -ne "" -and -not $lyrics1[0].contains("`n")){
-        $citation = $lyrics1[0]
-        $lyrics1 = $lyrics1[1..$lyrics1.Length]
-    } if ($lyrics2 -and $lyrics2[0] -and -not $lyrics2[0].contains("`n")){
-        if ($citation -eq "") {
-            $citation = $lyrics2[0]
-        }
-        $lyrics2 = $lyrics2[1..$lyrics2.Length]
-    } if ($citation -eq "") {
-        $citation = $song.Name
-    }
+    # $citation = ""
+    # if ($lyrics1[0] -ne "" -and -not $lyrics1[0].contains("`n")){
+    #     $citation = $lyrics1[0]
+    #     $lyrics1 = $lyrics1[1..$lyrics1.Length]
+    # } if ($lyrics2 -and $lyrics2[0] -and -not $lyrics2[0].contains("`n")){
+    #     if ($citation -eq "") {
+    #         $citation = $lyrics2[0]
+    #     }
+    #     $lyrics2 = $lyrics2[1..$lyrics2.Length]
+    # } if ($citation -eq "") {
+    #     $citation = $song.Name
+    # }
 
     if ($lyrics2 -and $lyrics1.Count -ne $lyrics2.Count){
         Write-Host "warning:$($song.Languages[1]) and $($song.Languages[2]) slides for song $($song.Name) do not have the same number of slides, therefor this song will not be added to the PPT. Please ensure the number of slides are equal and re-run this program to include this song."
@@ -200,7 +233,11 @@ if($startSlideShow){
 } else {
     Write-Host "200:PPT created"
 }
+
 #$presentation.SaveAs($outputFile)
 #$presentation.Close()
+
+[System.Runtime.Interopservices.Marshal]::ReleaseComObject($application) | Out-Null
+Remove-Variable application
 
 # [System.Windows.Forms.MessageBox]::Show("PowerPoint presentation created successfully!", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
