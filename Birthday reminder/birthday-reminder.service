@@ -1,0 +1,14 @@
+# /etc/systemd/system/birthday-reminder.service
+[Unit]
+Description=Birthday Reminder Script
+After=network.target
+
+[Service]
+User=church
+Type=oneshot
+WorkingDirectory=/opt/church/
+EnvironmentFile=/opt/church/.env
+ExecStart=/opt/church/venv/bin/python /opt/church/birthday_reminder.py
+
+[Install]
+WantedBy=multi-user.target
